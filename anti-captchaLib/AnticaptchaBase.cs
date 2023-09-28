@@ -171,10 +171,10 @@ namespace Anticaptcha_example
             string error;
             var methodNameStr = char.ToLowerInvariant(methodName.ToString()[0]) + methodName.ToString().Substring(1);
 
+            var json = JsonConvert.SerializeObject(jsonPostData, Formatting.Indented);
+
             dynamic data = HttpHelper.Post(
-                new Uri(Scheme + "://" + Host + "/" + methodNameStr),
-                JsonConvert.SerializeObject(jsonPostData, Formatting.Indented),
-                out error
+                new Uri(Scheme + "://" + Host + "/" + methodNameStr), json, out error
             );
 
             if (string.IsNullOrEmpty(error))
