@@ -50,8 +50,24 @@ namespace Anticaptcha_example
             jsonPostData["softId"] = SoftId;
             jsonPostData["task"] = taskJson;
 
+           
+
+
+            var t = taskJson.ToString(Formatting.None);
+
+
+            PostDataGambi teste = new PostDataGambi();
+            teste.clientKey = ClientKey;
+            teste.softId = SoftId;
+            teste.task = t;
+
+
+            var tt = System.Text.Json.JsonSerializer.Serialize(teste);
+            var tt3 = System.Text.Json.JsonSerializer.Serialize(jsonPostData);
+
+
             DebugHelper.Out("Connecting to " + Host, DebugHelper.Type.Info);
-            dynamic postResult = JsonPostRequest(ApiMethod.CreateTask, jsonPostData);
+            dynamic postResult = JsonPostRequest(ApiMethod.CreateTask, jsonPostData, teste);
 
             if (postResult == null || postResult.Equals(false))
             {
@@ -114,7 +130,7 @@ namespace Anticaptcha_example
                 ["taskId"] = TaskId
             };
 
-            dynamic postResult = JsonPostRequest(ApiMethod.GetTaskResult, jsonPostData);
+            dynamic postResult = JsonPostRequest(ApiMethod.GetTaskResult, jsonPostData, null);
 
             if (postResult == null || postResult.Equals(false))
             {
@@ -166,15 +182,20 @@ namespace Anticaptcha_example
             return false;
         }
 
-        private dynamic JsonPostRequest(ApiMethod methodName, JObject jsonPostData)
+        private dynamic JsonPostRequest(ApiMethod methodName, JObject jsonPostData, PostDataGambi teste)
         {
             string error;
             var methodNameStr = char.ToLowerInvariant(methodName.ToString()[0]) + methodName.ToString().Substring(1);
 
-            var json = JsonConvert.SerializeObject(jsonPostData, Formatting.Indented);
+            //var json2 = JsonConvert.SerializeObject(teste, Formatting.Indented);
+
+            //var json = JsonConvert.SerializeObject(jsonPostData, Formatting.Indented);
+            var tt3 = System.Text.Json.JsonSerializer.Serialize(jsonPostData);
+
 
             dynamic data = HttpHelper.Post(
-                new Uri(Scheme + "://" + Host + "/" + methodNameStr), json, out error
+                new Uri(Scheme + "://" + Host + "/" + methodNameStr), tt3, out error
+
             );
 
             if (string.IsNullOrEmpty(error))
@@ -203,7 +224,7 @@ namespace Anticaptcha_example
             var jsonPostData = new JObject();
             jsonPostData["clientKey"] = ClientKey;
 
-            dynamic postResult = JsonPostRequest(ApiMethod.GetBalance, jsonPostData);
+            dynamic postResult = JsonPostRequest(ApiMethod.GetBalance, jsonPostData, null);
 
             if (postResult == null || postResult.Equals(false))
             {
