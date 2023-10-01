@@ -65,6 +65,8 @@ namespace AntiCaptcha.Api.Controllers
                 throw;
             }
 
+            await Page.PauseAsync();
+
             return true;
         }
 
