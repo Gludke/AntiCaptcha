@@ -1,8 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Anticaptcha_example.Api;
-using Anticaptcha_example.Helper;
+//using Anticaptcha_example.Api;
+//using Anticaptcha_example.Helper;
+using PlaywrightExtraSharp.Models;
+using PlaywrightExtraSharp.Plugins.ExtraStealth;
+using PlaywrightExtraSharp;
 using Microsoft.Playwright;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace AntiCaptcha.Api.Controllers
 {
@@ -27,8 +29,17 @@ namespace AntiCaptcha.Api.Controllers
         [HttpGet(Name = "GetWeatherForecast")]
         public async Task<bool> Get()
         {
-            using var playwright = await Playwright.CreateAsync();
-            await using var browser = await playwright.Chromium.LaunchAsync(
+            // Initialization plugin builder
+            var playwright = new PlaywrightExtra(BrowserTypeEnum.Chromium);
+
+            // Install browser
+            playwright.Install();
+
+            // Use stealth plugin
+            playwright.Use(new StealthExtraPlugin());
+
+            // Launch the puppeteer browser with plugins
+            await using var browser = await playwright.LaunchAsync(
                 new BrowserTypeLaunchOptions
                 {
                     Channel = "chrome",
@@ -39,7 +50,8 @@ namespace AntiCaptcha.Api.Controllers
                     Args = new List<string> { "--start-maximized" }
                 });
 
-            Page = await browser.NewPageAsync(
+            // Create a new page
+            Page = await playwright.NewPageAsync(
                 new BrowserNewPageOptions
                 {
                     ViewportSize = ViewportSize.NoViewport,
@@ -47,7 +59,8 @@ namespace AntiCaptcha.Api.Controllers
                     Locale = "pt-BR",
                     //UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/42.0.2311.135 Safari/537.36 Edge/12.246"
                     UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.5938.92 Safari/537.36 Edge/100.0.10586.0"
-                });
+                }
+            );
 
             await Page.GotoAsync("https://cvmweb.cvm.gov.br/SWB/default.asp?sg_sistema=scw");
 
@@ -65,64 +78,42 @@ namespace AntiCaptcha.Api.Controllers
             await Task.Delay(1000);
             await Page.GetByLabel("Botão Entrar. Aperte a tecla enter para entrar.").ClickAsync();
 
-            // Execute JavaScript na página para recuperar o elemento pelo atributo 'name'
-            //var txtAreaRespostaCaptcha111 = await Page.EvaluateHandleAsync(@"() => {
-            //    var elements = document.getElementsByName('h-captcha-response');
-            //    return elements.length > 0 ? elements[0] : null;
-            //}");
-
-            var txtAreaRespostaCaptcha = await Page.QuerySelectorAsync("[name='h-captcha-response']");
-
-            try
-            {
-                var result = QuebrarCaptcha(Page.Url);
-
-                if (txtAreaRespostaCaptcha != null)
-                {
-                    await txtAreaRespostaCaptcha.FillAsync(result);
-                }
-            }
-            catch (Exception ex)
-            {
-                throw;
-            }
-
             await Page.PauseAsync();
 
             return true;
         }
 
-        private static string QuebrarCaptcha(string urlAtual)
-        {
-            DebugHelper.VerboseMode = true;
+        //private static string QuebrarCaptcha(string urlAtual)
+        //{
+        //    DebugHelper.VerboseMode = true;
 
-            var api = new HCaptchaProxyless
-            {
-                ClientKey = "7e63e104e9bdedfe4e53c0438d3e3e66",
-                WebsiteUrl = new Uri($"{urlAtual}"),
-                WebsiteKey = "93b08d40-d46c-400a-ba07-6f91cda815b9",
-                SoftId = 0
-            };
+        //    var api = new HCaptchaProxyless
+        //    {
+        //        ClientKey = "7e63e104e9bdedfe4e53c0438d3e3e66",
+        //        WebsiteUrl = new Uri($"{urlAtual}"),
+        //        WebsiteKey = "93b08d40-d46c-400a-ba07-6f91cda815b9",
+        //        SoftId = 0
+        //    };
 
-            // use to set invisible mode
-            //api.IsInvisible = true
+        //    // use to set invisible mode
+        //    //api.IsInvisible = true
 
-            // use to set Hcaptcha Enterprise parameters like rqdata, sentry, apiEndpoint, endpoint, reportapi, assethost, imghost
-            //api.EnterprisePayload.Add("rqdata", "rqdata value from target website");
-            //api.EnterprisePayload.Add("sentry", "true");
+        //    // use to set Hcaptcha Enterprise parameters like rqdata, sentry, apiEndpoint, endpoint, reportapi, assethost, imghost
+        //    //api.EnterprisePayload.Add("rqdata", "rqdata value from target website");
+        //    //api.EnterprisePayload.Add("sentry", "true");
 
-            string result = "";
-            if (!api.CreateTask())
-                DebugHelper.Out("API v2 send failed. " + api.ErrorMessage, DebugHelper.Type.Error);
-            else if (!api.WaitForResult())
-                DebugHelper.Out("Could not solve the captcha.", DebugHelper.Type.Error);
-            else
-            {
-                result = api.GetTaskSolution().GRecaptchaResponse;
-                DebugHelper.Out("Result: " + result, DebugHelper.Type.Success);
-            }
+        //    string result = "";
+        //    if (!api.CreateTask())
+        //        DebugHelper.Out("API v2 send failed. " + api.ErrorMessage, DebugHelper.Type.Error);
+        //    else if (!api.WaitForResult())
+        //        DebugHelper.Out("Could not solve the captcha.", DebugHelper.Type.Error);
+        //    else
+        //    {
+        //        result = api.GetTaskSolution().GRecaptchaResponse;
+        //        DebugHelper.Out("Result: " + result, DebugHelper.Type.Success);
+        //    }
 
-            return result;
-        }
+        //    return result;
+        //}
     }
 }
